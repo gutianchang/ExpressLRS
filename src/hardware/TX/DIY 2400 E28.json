@@ -26,7 +26,7 @@
     "screen_sda": 32,
     "screen_type": 0,
     "use_backpack": false,
-    "debug_backpack_baud": 460800,
+    "debug_backpack_baud": 420000,
     "debug_backpack_rx": 3,
     "debug_backpack_tx": 1,
     "misc_fan_en": 17

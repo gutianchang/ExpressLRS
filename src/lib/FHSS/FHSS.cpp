@@ -57,6 +57,7 @@ Approach:
 */
 void FHSSrandomiseFHSSsequence(const uint32_t seed)
 {
+    INFOLN("FHSSrandomiseFHSSsequence");
     FHSSconfig = &domains[firmwareOptions.domain];
     INFOLN("Setting %s Mode", FHSSconfig->domain);
     DBGLN("Number of FHSS frequencies = %u", FHSSconfig->freq_count);
@@ -70,6 +71,7 @@ void FHSSrandomiseFHSSsequence(const uint32_t seed)
     FHSSptr = 0;
     rngSeed(seed);
 
+    INFOLN("initialize the sequence array");
     // initialize the sequence array
     for (uint16_t i = 0; i < FHSSgetSequenceCount(); i++)
     {
@@ -82,6 +84,7 @@ void FHSSrandomiseFHSSsequence(const uint32_t seed)
         }
     }
 
+    INFOLN("FHSSgetSequenceCount");
     for (uint16_t i=0; i < FHSSgetSequenceCount(); i++)
     {
         // if it's not the sync channel
@@ -105,6 +108,7 @@ void FHSSrandomiseFHSSsequence(const uint32_t seed)
             DBGCR;
     }
     DBGCR;
+    INFOLN("FHSSgetSequenceCount done");
 }
 
 bool isDomain868()

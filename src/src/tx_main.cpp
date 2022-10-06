@@ -166,20 +166,20 @@ bool ICACHE_RAM_ATTR ProcessTLMpacket(SX12xxDriverCommon::rx_status const status
 {
   if (status != SX12xxDriverCommon::SX12XX_RX_OK)
   {
-    DBGLN("TLM HW CRC error");
+    INFOLN("TLM HW CRC error");
     return false;
   }
 
   OTA_Packet_s * const otaPktPtr = (OTA_Packet_s * const)Radio.RXdataBuffer;
   if (!OtaValidatePacketCrc(otaPktPtr))
   {
-    DBGLN("TLM crc error");
+    INFOLN("TLM crc error");
     return false;
   }
 
   if (otaPktPtr->std.type != PACKET_TYPE_TLM)
   {
-    DBGLN("TLM type error %d", otaPktPtr->std.type);
+    INFOLN("TLM type error %d", otaPktPtr->std.type);
     return false;
   }
 
@@ -207,7 +207,7 @@ bool ICACHE_RAM_ATTR ProcessTLMpacket(SX12xxDriverCommon::rx_status const status
       telemPtr = ota8->tlm_dl.payload;
       dataLen = sizeof(ota8->tlm_dl.payload);
     }
-    //DBGLN("pi=%u len=%u", ota8->tlm_dl.packageIndex, dataLen);
+    //INFOLN("pi=%u len=%u", ota8->tlm_dl.packageIndex, dataLen);
     TelemetryReceiver.ReceiveData(ota8->tlm_dl.packageIndex, telemPtr, dataLen);
   }
   // Std res mode
@@ -325,7 +325,7 @@ void ICACHE_RAM_ATTR SetRFLinkRate(uint8_t index) // Set speed of RF link (hz)
     && (OtaSwitchModeCurrent == newSwitchMode))
     return;
 
-  DBGLN("set rate %u", index);
+  INFOLN("set rate %u", index);
   uint32_t interval = ModParams->interval;
 #if defined(DEBUG_FREQ_CORRECTION) && defined(RADIO_SX128X)
   interval = interval * 12 / 10; // increase the packet interval by 20% to allow adding packet header
@@ -423,6 +423,7 @@ void ICACHE_RAM_ATTR SendRCdataToRF()
       NextPacketIsMspData = false;
       // counter can be increased even for normal msp messages since it's reset if a real bind message should be sent
       BindingSendCount++;
+      INFOLN("BingdingSendCount = %d", BindingSendCount);
       // If the telemetry ratio isn't already 1:2, send a sync packet to boost it
       // to add bandwidth for the reply
       if (ExpressLRS_currTlmDenom != 2)
@@ -692,7 +693,7 @@ static void UpdateConnectDisconnectStatus()
     {
       connectionState = connected;
       crsf.ForwardDevicePings = true;
-      DBGLN("got downlink conn");
+      INFOLN("got downlink conn");
     }
   }
   // If past RX_LOSS_CNT, or in awaitingModelId state for longer than DisconnectTimeoutMs, go to disconnected
@@ -745,7 +746,7 @@ void OnPowerGetCalibration(mspPacket_t *packet)
   UNUSED(index);
   int8_t values[PWR_COUNT] = {0};
   POWERMGNT.GetPowerCaliValues(values, PWR_COUNT);
-  DBGLN("power get calibration value %d",  values[index]);
+  INFOLN("power get calibration value %d",  values[index]);
 }
 
 void OnPowerSetCalibration(mspPacket_t *packet)
@@ -755,7 +756,7 @@ void OnPowerSetCalibration(mspPacket_t *packet)
 
   if((index < 0) || (index > PWR_COUNT))
   {
-    DBGLN("calibration error index %d out of range", index);
+    INFOLN("calibration error index %d out of range", index);
     return;
   }
   hwTimer.stop();
@@ -765,7 +766,7 @@ void OnPowerSetCalibration(mspPacket_t *packet)
   POWERMGNT.GetPowerCaliValues(values, PWR_COUNT);
   values[index] = value;
   POWERMGNT.SetPowerCaliValues(values, PWR_COUNT);
-  DBGLN("power calibration done %d, %d", index, value);
+  INFOLN("power calibration done %d, %d", index, value);
   hwTimer.resume();
 }
 #endif
@@ -807,7 +808,7 @@ void EnterBindingMode()
   // Start transmitting again
   hwTimer.resume();
 
-  DBGLN("Entered binding mode at freq = %d", Radio.currFreq);
+  INFOLN("Entered binding mode at freq = %d", Radio.currFreq);
 }
 
 void ExitBindingMode()
@@ -828,7 +829,7 @@ void ExitBindingMode()
 
   SetRFLinkRate(config.GetRate()); //return to original rate
 
-  DBGLN("Exiting binding mode");
+  INFOLN("Exiting binding mode");
 }
 
 void ProcessMSPPacket(mspPacket_t *packet)
@@ -985,6 +986,9 @@ static void cyclePower()
 
 void setup()
 {
+  // 设置交互用的按钮
+  pinMode(2, INPUT);
+
   if (setupHardwareFromOptions())
   {
     initUID();
@@ -993,10 +997,10 @@ void setup()
     devicesRegister(ui_devices, ARRAY_SIZE(ui_devices));
     // Initialise the devices
     devicesInit();
-    DBGLN("Initialised devices");
+    INFOLN("Initialised devices");
 
     FHSSrandomiseFHSSsequence(uidMacSeedGet());
-
+    
     Radio.RXdoneCallback = &RXdoneISR;
     Radio.TXdoneCallback = &TXdoneISR;
 
@@ -1004,7 +1008,7 @@ void setup()
     crsf.disconnected = &UARTdisconnected;
     crsf.RecvModelUpdate = &ModelUpdateReq;
     hwTimer.callbackTock = &timerCallbackNormal;
-    DBGLN("ExpressLRS TX Module Booted...");
+    INFOLN("ExpressLRS TX Module Booted...");
 
     eeprom.Begin(); // Init the eeprom
     config.SetStorageProvider(&eeprom); // Pass pointer to the Config class for access to storage
@@ -1020,6 +1024,7 @@ void setup()
     #else
     if (GPIO_PIN_SCK != UNDEF_PIN)
     {
+      INFOLN("Ratio begin...");
       init_success = Radio.Begin();
     }
     else
@@ -1031,10 +1036,12 @@ void setup()
 
     if (!init_success)
     {
+      INFOLN("radioFailed...");
       connectionState = radioFailed;
     }
     else
     {
+      INFOLN("radio success...");
       TelemetryReceiver.SetDataToReceive(CRSFinBuffer, sizeof(CRSFinBuffer));
 
       POWERMGNT.init();
@@ -1061,6 +1068,11 @@ void setup()
 
 void loop()
 {
+  if(digitalRead(2) && (!InBindingMode)){
+    INFOLN("button pressed...");
+    // delay(500);
+    EnterBindingMode();
+  }
   uint32_t now = millis();
 
   #if defined(USE_BLE_JOYSTICK)
@@ -1084,6 +1096,7 @@ void loop()
   #if defined(PLATFORM_ESP8266) || defined(PLATFORM_ESP32)
     // If the reboot time is set and the current time is past the reboot time then reboot.
     if (rebootTime != 0 && now > rebootTime) {
+      INFOLN("rebootTime != 0 && now > rebootTime");
       ESP.restart();
     }
   #endif

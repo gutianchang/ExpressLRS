@@ -76,12 +76,12 @@ bool SX1280Driver::Begin()
     hal.IsrCallback_2 = &SX1280Driver::IsrCallback_2;
 
     hal.reset();
-    DBGLN("SX1280 Begin");
+    INFOLN("SX1280 Begin");
 
     SetMode(SX1280_MODE_STDBY_RC, SX1280_Radio_All); // Put in STDBY_RC mode.  Must be SX1280_MODE_STDBY_RC for SX1280_RADIO_SET_REGULATORMODE to be set.
 
     uint16_t firmwareRev = (((hal.ReadRegister(REG_LR_FIRMWARE_VERSION_MSB, SX1280_Radio_1)) << 8) | (hal.ReadRegister(REG_LR_FIRMWARE_VERSION_MSB + 1, SX1280_Radio_1)));
-    DBGLN("Read Vers sx1280 #1: %d", firmwareRev);
+    INFOLN("Read Vers sx1280 #1: %d", firmwareRev);
     if ((firmwareRev == 0) || (firmwareRev == 65535))
     {
         // SPI communication failed, just return without configuration
@@ -91,7 +91,7 @@ bool SX1280Driver::Begin()
     if (GPIO_PIN_NSS_2 != UNDEF_PIN)
     {
         firmwareRev = (((hal.ReadRegister(REG_LR_FIRMWARE_VERSION_MSB, SX1280_Radio_2)) << 8) | (hal.ReadRegister(REG_LR_FIRMWARE_VERSION_MSB + 1, SX1280_Radio_2)));
-        DBGLN("Read Vers sx1280 #2: %d", firmwareRev);
+        INFOLN("Read Vers sx1280 #2: %d", firmwareRev);
         if ((firmwareRev == 0) || (firmwareRev == 65535))
         {
             // SPI communication failed, just return without configuration
@@ -184,7 +184,7 @@ void SX1280Driver::SetOutputPower(int8_t power)
     if (pwrCurrent != pwrNew)
     {
         pwrPending = pwrNew;
-        DBGLN("SetPower: %u", pwrPending);
+        INFOLN("SetPower: %u", pwrPending);
     }
 }
 

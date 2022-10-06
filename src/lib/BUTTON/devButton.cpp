@@ -39,6 +39,7 @@ static ButtonAction_fn actions[ACTION_LAST] = { nullptr };
 
 void registerButtonFunction(action_e action, ButtonAction_fn function)
 {
+    INFOLN("registerButtonFunction");
     actions[action] = function;
 }
 
