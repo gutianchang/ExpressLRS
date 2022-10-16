@@ -21,6 +21,8 @@
 #include "devPDET.h"
 #include "devBackpack.h"
 
+static bool BindingFlag = false;
+
 //// CONSTANTS ////
 #define MSP_PACKET_SEND_INTERVAL 10LU
 
@@ -701,6 +703,7 @@ static void UpdateConnectDisconnectStatus()
     (now - rfModeLastChangedMS) > ExpressLRS_currAirRate_RFperfParams->DisconnectTimeoutMs)
   {
     connectionState = disconnected;
+    INFOLN("distconnect");
     connectionHasModelMatch = true;
     crsf.ForwardDevicePings = false;
   }
@@ -782,6 +785,8 @@ void SendUIDOverMSP()
 
 void EnterBindingMode()
 {
+  INFOLN("EnterBindingMode...");
+  BindingFlag = true;
   if (InBindingMode) {
       // Don't enter binding if we're already binding
       return;
@@ -1066,9 +1071,11 @@ void setup()
   devicesStart();
 }
 
+
+
 void loop()
 {
-  if(digitalRead(2) && (!InBindingMode)){
+  if(digitalRead(2) && (!InBindingMode) && (!BindingFlag)){
     INFOLN("button pressed...");
     // delay(500);
     EnterBindingMode();

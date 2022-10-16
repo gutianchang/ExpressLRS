@@ -244,7 +244,7 @@ void ICACHE_RAM_ATTR getRFlinkInfo()
     crsf.LinkStatistics.uplink_SNR = SNR_DESCALE(Radio.LastPacketSNRRaw); // possibly overriden below
     //crsf.LinkStatistics.uplink_Link_quality = uplinkLQ; // handled in Tick
     crsf.LinkStatistics.rf_Mode = ExpressLRS_currAirRate_Modparams->enum_rate;
-    //DBGLN(crsf.LinkStatistics.uplink_RSSI_1);
+    //INFOLN(crsf.LinkStatistics.uplink_RSSI_1);
     #if defined(DEBUG_BF_LINK_STATS)
     crsf.LinkStatistics.downlink_RSSI = debug1;
     crsf.LinkStatistics.downlink_Link_quality = debug2;
@@ -420,7 +420,7 @@ void ICACHE_RAM_ATTR HandleFreqCorr(bool value)
         }
         else
         {
-            DBGLN("Max -FreqCorrection reached!");
+            INFOLN("Max -FreqCorrection reached!");
         }
     }
     else
@@ -431,7 +431,7 @@ void ICACHE_RAM_ATTR HandleFreqCorr(bool value)
         }
         else
         {
-            DBGLN("Max +FreqCorrection reached!");
+            INFOLN("Max +FreqCorrection reached!");
         }
     }
 }
@@ -640,7 +640,7 @@ void ICACHE_RAM_ATTR HWtimerCallbackTock()
 
 void LostConnection(bool resumeRx)
 {
-    DBGLN("lost conn fc=%d fo=%d", FreqCorrection, hwTimer.FreqOffset);
+    INFOLN("lost conn fc=%d fo=%d", FreqCorrection, hwTimer.FreqOffset);
 
     RFmodeCycleMultiplier = 1;
     connectionState = disconnected; //set lost connection
@@ -682,7 +682,7 @@ void ICACHE_RAM_ATTR TentativeConnection(unsigned long now)
     connectionState = tentative;
     connectionHasModelMatch = false;
     RXtimerState = tim_disconnected;
-    DBGLN("tentative conn");
+    INFOLN("tentative conn");
     FreqCorrection = 0;
     PfdPrevRawOffset = 0;
     LPF_Offset.init(0);
@@ -709,7 +709,7 @@ void GotConnection(unsigned long now)
     webserverPreventAutoStart = true;
     #endif
 
-    DBGLN("got conn");
+    INFOLN("got conn");
 }
 
 static void ICACHE_RAM_ATTR ProcessRfPacket_RC(OTA_Packet_s const * const otaPktPtr)
@@ -837,7 +837,7 @@ static bool ICACHE_RAM_ATTR ProcessRfPacket_SYNC(uint32_t const now, OTA_Sync_s 
     uint8_t TlmDenom = TLMratioEnumToValue(TLMrateIn);
     if (ExpressLRS_currTlmDenom != TlmDenom)
     {
-        DBGLN("New TLMrate 1:%u", TlmDenom);
+        INFOLN("New TLMrate 1:%u", TlmDenom);
         ExpressLRS_currTlmDenom = TlmDenom;
         telemBurstValid = false;
     }
@@ -852,7 +852,7 @@ static bool ICACHE_RAM_ATTR ProcessRfPacket_SYNC(uint32_t const now, OTA_Sync_s 
         || FHSSgetCurrIndex() != otaSync->fhssIndex
         || connectionHasModelMatch != modelMatched)
     {
-        //DBGLN("\r\n%ux%ux%u", OtaNonce, otaPktPtr->sync.nonce, otaPktPtr->sync.fhssIndex);
+        //INFOLN("\r\n%ux%ux%u", OtaNonce, otaPktPtr->sync.nonce, otaPktPtr->sync.fhssIndex);
         FHSSsetCurrIndex(otaSync->fhssIndex);
         OtaNonce = otaSync->nonce;
         TentativeConnection(now);
@@ -954,7 +954,7 @@ void ICACHE_RAM_ATTR TXdoneISR()
 
 void UpdateModelMatch(uint8_t model)
 {
-    DBGLN("Set ModelId=%u", model);
+    INFOLN("Set ModelId=%u", model);
     config.SetModelId(model);
 }
 
@@ -1092,7 +1092,7 @@ static void setupConfigAndPocCheck()
     bool doPowerCount = config.GetOnLoan() || !firmwareOptions.hasUID;
     if (doPowerCount)
     {
-        DBGLN("Doing power-up check for loan revocation and/or re-binding");
+        INFOLN("Doing power-up check for loan revocation and/or re-binding");
         // Increment the power on counter in eeprom
         config.SetPowerOnCounter(config.GetPowerOnCounter() + 1);
         config.Commit();
@@ -1116,7 +1116,7 @@ static void setupConfigAndPocCheck()
         }
     }
 
-    DBGLN("ModelId=%u", config.GetModelId());
+    INFOLN("ModelId=%u", config.GetModelId());
 }
 
 static void setupTarget()
@@ -1146,17 +1146,17 @@ static void setupBindingFromConfig()
     // otherwise use the bind flag and UID in eeprom for UID
     if (config.GetOnLoan())
     {
-        DBGLN("RX has been loaned, reading the UID from eeprom...");
+        INFOLN("RX has been loaned, reading the UID from eeprom...");
         memcpy(UID, config.GetOnLoanUID(), sizeof(UID));
     }
     // Check the byte that indicates if RX has been bound
     else if (!firmwareOptions.hasUID && config.GetIsBound())
     {
-        DBGLN("RX has been bound previously, reading the UID from eeprom...");
+        INFOLN("RX has been bound previously, reading the UID from eeprom...");
         memcpy(UID, config.GetUID(), sizeof(UID));
     }
 
-    DBGLN("UID = %d, %d, %d, %d, %d, %d", UID[0], UID[1], UID[2], UID[3], UID[4], UID[5]);
+    INFOLN("UID = %d, %d, %d, %d, %d, %d", UID[0], UID[1], UID[2], UID[3], UID[4], UID[5]);
     OtaUpdateCrcInitFromUid();
 }
 
@@ -1203,7 +1203,7 @@ static void setupRadio()
     POWERMGNT.init();
     if (!init_success)
     {
-        DBGLN("Failed to detect RF chipset!!!");
+        INFOLN("Failed to detect RF chipset!!!");
         connectionState = radioFailed;
         return;
     }
@@ -1219,6 +1219,7 @@ static void setupRadio()
 
     SetRFLinkRate(RATE_DEFAULT);
     RFmodeCycleMultiplier = 1;
+    INFOLN("setupRadio");
 }
 
 static void updateTelemetryBurst()
@@ -1254,7 +1255,7 @@ static void cycleRfMode(unsigned long now)
         // Display the current air rate to the user as an indicator something is happening
         scanIndex++;
         Radio.RXnb();
-        DBGLN("%u", ExpressLRS_currAirRate_Modparams->interval);
+        INFOLN("%u", ExpressLRS_currAirRate_Modparams->interval);
 
         // Switch to FAST_SYNC if not already in it (won't be if was just connected)
         RFmodeCycleMultiplier = 1;
@@ -1294,6 +1295,7 @@ static void updateBindingMode(unsigned long now)
     }
     // If returning the model to the owner, set the flag and call ExitBindingMode to reset the CRC and FHSS
     else if (returnModelFromLoan && config.GetOnLoan()) {
+        INFOLN("returnModelFromLoan && config.GetOnLoan()");
         LostConnection(false);
         config.SetOnLoan(false);
         memcpy(UID, MasterUID, sizeof(MasterUID));
@@ -1373,8 +1375,10 @@ static void updateSwitchMode()
 
 static void CheckConfigChangePending()
 {
+    
     if (config.IsModified() && !InBindingMode)
     {
+        INFOLN("LostConnection in CheckConfigChangePending");
         LostConnection(false);
         config.Commit();
         devicesTriggerEvent();
@@ -1422,6 +1426,7 @@ void setup()
     hardwareConfigured = options_init();
     if (!hardwareConfigured)
     {
+        INFOLN("!hardwareConfigured");
         // Register the WiFi with the framework
         static device_affinity_t wifi_device[] = {
             {&WIFI_device, 1}
@@ -1435,6 +1440,7 @@ void setup()
 
     if (hardwareConfigured)
     {
+        INFOLN("hardwareConfigured");
         initUID();
         setupTarget();
         // serial setup must be done before anything as some libs write
@@ -1457,7 +1463,7 @@ void setup()
         if (connectionState != radioFailed)
         {
             // RFnoiseFloor = MeasureNoiseFloor(); //TODO move MeasureNoiseFloor to driver libs
-            // DBGLN("RF noise floor: %d dBm", RFnoiseFloor);
+            // INFOLN("RF noise floor: %d dBm", RFnoiseFloor);
 
             hwTimer.callbackTock = &HWtimerCallbackTock;
             hwTimer.callbackTick = &HWtimerCallbackTick;
@@ -1475,6 +1481,7 @@ void setup()
 #endif
 
     devicesStart();
+    INFOLN("RX start success...");
 }
 
 void loop()
@@ -1504,7 +1511,7 @@ void loop()
     }
 
     if ((connectionState != disconnected) && (ExpressLRS_currAirRate_Modparams->index != ExpressLRS_nextAirRateIndex)){ // forced change
-        DBGLN("Req air rate change %u->%u", ExpressLRS_currAirRate_Modparams->index, ExpressLRS_nextAirRateIndex);
+        INFOLN("Req air rate change %u->%u", ExpressLRS_currAirRate_Modparams->index, ExpressLRS_nextAirRateIndex);
         LostConnection(true);
         LastSyncPacket = now;           // reset this variable to stop rf mode switching and add extra time
         RFmodeLastCycled = now;         // reset this variable to stop rf mode switching and add extra time
@@ -1514,7 +1521,7 @@ void loop()
 
     if (connectionState == tentative && (now - LastSyncPacket > ExpressLRS_currAirRate_RFperfParams->RxLockTimeoutMs))
     {
-        DBGLN("Bad sync, aborting");
+        INFOLN("Bad sync, aborting");
         LostConnection(true);
         RFmodeLastCycled = now;
         LastSyncPacket = now;
@@ -1525,6 +1532,8 @@ void loop()
     uint32_t localLastValidPacket = LastValidPacket; // Required to prevent race condition due to LastValidPacket getting updated from ISR
     if ((connectionState == connected) && ((int32_t)ExpressLRS_currAirRate_RFperfParams->DisconnectTimeoutMs < (int32_t)(now - localLastValidPacket))) // check if we lost conn.
     {
+        //  满足了这个条件导致连接断开！！！  没有接收到有效的包
+        INFOLN("ExpressLRS_currAirRate_RFperfParams->DisconnectTimeoutMs < (int32_t)(now - localLastValidPacket)");
         LostConnection(true);
     }
 
@@ -1538,7 +1547,7 @@ void loop()
     if ((RXtimerState == tim_tentative) && ((now - GotConnectionMillis) > ConsiderConnGoodMillis) && (abs(LPF_OffsetDx.value()) <= 5))
     {
         RXtimerState = tim_locked;
-        DBGLN("Timer locked");
+        INFOLN("Timer locked");
     }
 
     uint8_t *nextPayload = 0;
@@ -1564,7 +1573,7 @@ void reset_into_bootloader(void)
     CRSF_TX_SERIAL.flush();
 #if defined(PLATFORM_STM32)
     delay(100);
-    DBGLN("Jumping to Bootloader...");
+    INFOLN("Jumping to Bootloader...");
     delay(100);
 
     /** Write command for firmware update.
@@ -1587,6 +1596,7 @@ void reset_into_bootloader(void)
 
 void EnterBindingMode()
 {
+    INFOLN("EnterBindingMode");
     if (InLoanBindingMode)
     {
         loadBindingStartedMs = millis();
@@ -1597,7 +1607,7 @@ void EnterBindingMode()
         // Don't enter binding if:
         // - we're already connected
         // - we're already binding
-        DBGLN("Cannot enter binding mode!");
+        INFOLN("Cannot enter binding mode!");
         return;
     }
 
@@ -1619,7 +1629,7 @@ void EnterBindingMode()
     // If the Radio Params (including InvertIQ) parameter changed, need to restart RX to take effect
     Radio.RXnb();
 
-    DBGLN("Entered binding mode at freq = %d", Radio.currFreq);
+    INFOLN("Entered binding mode at freq = %d", Radio.currFreq);
     devicesTriggerEvent();
 }
 
@@ -1628,7 +1638,7 @@ void ExitBindingMode()
     if (!InBindingMode && !returnModelFromLoan)
     {
         // Not in binding mode
-        DBGLN("Cannot exit binding mode, not in binding mode!");
+        INFOLN("Cannot exit binding mode, not in binding mode!");
         return;
     }
 
@@ -1660,7 +1670,7 @@ void ExitBindingMode()
     InBindingMode = false;
     InLoanBindingMode = false;
     returnModelFromLoan = false;
-    DBGLN("Exiting binding mode");
+    INFOLN("Exiting binding mode");
     devicesTriggerEvent();
 }
 
@@ -1671,7 +1681,7 @@ void ICACHE_RAM_ATTR OnELRSBindMSP(uint8_t* newUid4)
         UID[i + 2] = newUid4[i];
     }
 
-    DBGLN("New UID = %d, %d, %d, %d, %d, %d", UID[0], UID[1], UID[2], UID[3], UID[4], UID[5]);
+    INFOLN("New UID = %d, %d, %d, %d, %d, %d", UID[0], UID[1], UID[2], UID[3], UID[4], UID[5]);
 
     // Set new UID in eeprom
     if (InLoanBindingMode)

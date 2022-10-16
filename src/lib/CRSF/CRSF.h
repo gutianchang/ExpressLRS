@@ -25,6 +25,9 @@
 #include "driver/gpio.h"
 #endif
 
+#define DEBUG_CRSF_NO_OUTPUT
+
+
 class CRSF
 {
 
